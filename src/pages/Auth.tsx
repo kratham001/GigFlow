@@ -85,17 +85,32 @@ const Auth = () => {
     try {
       authSchema.parse({ email, password });
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Welcome back!",
-      });
-      navigate("/");
+      // Fetch user role to determine redirect
+      if (data.user) {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .single();
+
+        toast({
+          title: "Welcome back!",
+        });
+
+        // Redirect based on role
+        if (roleData?.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/books");
+        }
+      }
     } catch (error: any) {
       toast({
         title: "Error",
