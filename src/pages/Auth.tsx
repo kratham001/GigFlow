@@ -55,7 +55,13 @@ const Auth = () => {
           title: "Account created!",
           description: "Welcome to the library system",
         });
-        navigate("/");
+        
+        // Redirect based on role
+        if (role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/books");
+        }
       }
     } catch (error: any) {
       toast({
