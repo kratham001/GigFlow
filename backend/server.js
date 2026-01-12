@@ -67,10 +67,20 @@ const io = new Server(server, {
 
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
-  // Your socket logic here
+  
+  socket.on("join_room", (userId) => {
+    if (userId) {
+      socket.join(userId); // Join the room named after the User ID
+      console.log(`User ${userId} joined room: ${userId}`);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected');
+  });
 });
 
-// Make io accessible in routes
+
 app.set('io', io);
 
 const PORT = process.env.PORT || 5000;
