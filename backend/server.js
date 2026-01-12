@@ -36,7 +36,7 @@ const server = http.createServer(app);
 app.use(cors({
   origin: process.env.CLIENT_URL, // Ensure Render env var has NO trailing slash
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"]
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
 }));
 
 // 3. PARSERS (CRITICAL ORDER)
