@@ -86,6 +86,18 @@ const hireFreelancer = async (req, res) => {
         message: `You have been hired for: ${gig.title}`,
         gigId: gig._id
       });
+
+      // rejected bids notiff
+      const rejectedBids = await Bid.find({ gigId: gig._id, status: 'rejected' });
+
+      
+      rejectedBids.forEach((rejectedBid) => {
+        io.to(rejectedBid.freelancerId.toString()).emit('notification', {
+          type: 'REJECTED',
+          message: `Update: The gig "${gig.title}" has been assigned to someone else.`,
+          gigId: gig._id
+        });
+      });
     }
 
     res.json({ success: true, message: "Hired successfully", gig, bid });
