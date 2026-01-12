@@ -14,12 +14,11 @@ const GigDetails = () => {
   
   const [gig, setGig] = useState(null);
   const [bidMessage, setBidMessage] = useState('');
+  const [bidAmount, setBidAmount] = useState('');
 
-  
   useEffect(() => {
     const fetchGig = async () => {
       try {
-        
         const res = await api.get(`/gigs`); 
         const foundGig = res.data.find(g => g._id === id);
         setGig(foundGig);
@@ -30,7 +29,6 @@ const GigDetails = () => {
     fetchGig();
   }, [id]);
 
-  
   useEffect(() => {
     if (gig && user && gig.ownerId._id === user._id) {
       dispatch(fetchBidsByGigId(id));
@@ -40,9 +38,14 @@ const GigDetails = () => {
   const handleBidSubmit = async (e) => {
     e.preventDefault();
     try {
-      await api.post('/bids', { gigId: id, message: bidMessage });
+      await api.post('/bids', { 
+        gigId: id, 
+        message: bidMessage, 
+        amount: Number(bidAmount) 
+      });
       toast.success('Bid submitted successfully!');
       setBidMessage('');
+      setBidAmount('');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit bid');
     }
@@ -78,27 +81,39 @@ const GigDetails = () => {
         </div>
       </div>
 
-      {/* Freelancer View: Bid Form */}
       {!isOwner && user && gig.status === 'open' && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-xl font-semibold mb-4">Submit a Proposal</h3>
           <form onSubmit={handleBidSubmit}>
-            <textarea
-              className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-              rows="4"
-              placeholder="Why are you the best fit for this gig?"
-              value={bidMessage}
-              onChange={(e) => setBidMessage(e.target.value)}
-              required
-            ></textarea>
-            <button type="submit" className="mt-3 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+            <div className="mb-4">
+               <label className="block text-sm font-medium text-gray-700 mb-1">Your Price ($)</label>
+               <input
+                 type="number"
+                 className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                 placeholder="Enter your bid amount"
+                 value={bidAmount}
+                 onChange={(e) => setBidAmount(e.target.value)}
+                 required
+               />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter</label>
+              <textarea
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                rows="4"
+                placeholder="Why are you the best fit for this gig?"
+                value={bidMessage}
+                onChange={(e) => setBidMessage(e.target.value)}
+                required
+              ></textarea>
+            </div>
+            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
               Send Bid
             </button>
           </form>
         </div>
       )}
 
-      {/* Owner View: Bid List */}
       {isOwner && (
         <div>
           <h3 className="text-2xl font-bold mb-4">Proposals ({bids.length})</h3>

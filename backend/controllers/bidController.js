@@ -3,16 +3,22 @@ const Gig = require('../models/Gig');
 const Bid = require('../models/Bid');
 
 const createBid = async (req, res) => {
-  const { gigId, message } = req.body;
+  const { gigId, message, price } = req.body; 
 
   try {
     const gig = await Gig.findById(gigId);
     if (!gig) return res.status(404).json({ message: 'Gig not found' });
     if (gig.status !== 'open') return res.status(400).json({ message: 'Gig is closed' });
 
+    // Validate price
+    if (!price || price <= 0) {
+      return res.status(400).json({ message: 'Please enter a valid bid amount' });
+    }
+
     const bid = await Bid.create({
       gigId,
       freelancerId: req.user._id,
+      price,   
       message,
     });
 

@@ -1,35 +1,140 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchBidsByGigId, hireFreelancer } from '../features/bidSlice';
+import api from '../api/axiosInstance';
+import BidCard from '../components/BidCard';
+import toast from 'react-hot-toast';
 
-const BidCard = ({ bid, isOwner, onHire }) => {
-  const statusStyles = {
-    pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-    hired: "bg-green-100 text-green-800 border-green-200",
-    rejected: "bg-gray-100 text-gray-500 border-gray-200 opacity-60",
+const GigDetails = () => {
+  const { id } = useParams();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { bids } = useSelector((state) => state.bids);
+  
+  const [gig, setGig] = useState(null);
+  const [bidMessage, setBidMessage] = useState('');
+  const [bidAmount, setBidAmount] = useState('');
+
+  useEffect(() => {
+    const fetchGig = async () => {
+      try {
+        const res = await api.get(`/gigs`); 
+        const foundGig = res.data.find(g => g._id === id);
+        setGig(foundGig);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchGig();
+  }, [id]);
+
+  useEffect(() => {
+    if (gig && user && gig.ownerId._id === user._id) {
+      dispatch(fetchBidsByGigId(id));
+    }
+  }, [gig, user, id, dispatch]);
+
+  const handleBidSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/bids', { 
+        gigId: id, 
+        message: bidMessage, 
+        amount: Number(bidAmount) 
+      });
+      toast.success('Bid submitted successfully!');
+      setBidMessage('');
+      setBidAmount('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit bid');
+    }
   };
 
+  const handleHire = (bidId) => {
+    dispatch(hireFreelancer(bidId))
+      .unwrap()
+      .then(() => {
+        toast.success("Freelancer hired successfully!");
+        setGig(prev => ({ ...prev, status: 'assigned' }));
+      })
+      .catch((err) => toast.error(err));
+  };
+
+  if (!gig) return <div className="p-6 text-center">Loading gig details...</div>;
+
+  const isOwner = user && user._id === gig.ownerId._id;
+
   return (
-    <div className={`p-4 mb-3 border rounded-lg shadow-sm ${bid.status === 'rejected' ? 'bg-gray-50' : 'bg-white'}`}>
-      <div className="flex justify-between items-start">
-        <div>
-          <h4 className="font-semibold text-lg">{bid.freelancerId?.name || "Unknown Freelancer"}</h4>
-          <p className="text-gray-600 mt-1">{bid.message}</p>
+    <div className="container mx-auto p-6 max-w-4xl">
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <div className="flex justify-between items-start">
+          <h1 className="text-3xl font-bold text-gray-800">{gig.title}</h1>
+          <span className={`px-4 py-1 rounded-full text-sm font-bold ${gig.status === 'open' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+            {gig.status.toUpperCase()}
+          </span>
         </div>
-        
-        <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusStyles[bid.status]}`}>
-          {bid.status.toUpperCase()}
-        </span>
+        <p className="mt-4 text-gray-600 text-lg leading-relaxed">{gig.description}</p>
+        <div className="mt-6 flex gap-6 text-gray-500 font-medium">
+          <span>Budget: ${gig.budget}</span>
+          <span>Owner: {gig.ownerId.name}</span>
+        </div>
       </div>
 
-      {isOwner && bid.status === 'pending' && (
-        <button 
-          onClick={() => onHire(bid._id)}
-          className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded transition-colors cursor-pointer"
-        >
-          Hire Applicant
-        </button>
+      {!isOwner && user && gig.status === 'open' && (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-xl font-semibold mb-4">Submit a Proposal</h3>
+          <form onSubmit={handleBidSubmit}>
+            <div className="mb-4">
+               <label className="block text-sm font-medium text-gray-700 mb-1">Your Price ($)</label>
+               <input
+                 type="number"
+                 className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                 placeholder="Enter your bid amount"
+                 value={bidAmount}
+                 onChange={(e) => setBidAmount(e.target.value)}
+                 required
+               />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Cover Letter</label>
+              <textarea
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                rows="4"
+                placeholder="Why are you the best fit for this gig?"
+                value={bidMessage}
+                onChange={(e) => setBidMessage(e.target.value)}
+                required
+              ></textarea>
+            </div>
+            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition">
+              Send Bid
+            </button>
+          </form>
+        </div>
+      )}
+
+      {isOwner && (
+        <div>
+          <h3 className="text-2xl font-bold mb-4">Proposals ({bids.length})</h3>
+          {bids.length === 0 ? (
+            <p className="text-gray-500 italic">No bids yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {bids.map(bid => (
+                <BidCard 
+                  key={bid._id} 
+                  bid={bid} 
+                  isOwner={isOwner} 
+                  onHire={handleHire} 
+                />
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
 };
 
-export default BidCard;
+export default GigDetails;
