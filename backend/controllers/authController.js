@@ -6,7 +6,7 @@ const generateToken = (res, userId) => {
     expiresIn: '30d',
   });
 
-  res.cookie('token', token, {
+  res.cookie('accesstoken', token, {
     httpOnly: true,
     secure: process.env.NODE_ENV !== 'development',
     sameSite: "none",
