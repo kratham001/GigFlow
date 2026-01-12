@@ -1,14 +1,16 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const http = require('http');
 const { Server } = require('socket.io');
+const connectDB = require('./config/db');
 
 const authRoutes = require('./routes/authRoutes');
 const gigRoutes = require('./routes/gigRoutes');
 const bidRoutes = require('./routes/bidRoutes');
+
+connectDB();
 
 const app = express();
 const server = http.createServer(app);
@@ -29,10 +31,6 @@ app.use(cors({
   origin: process.env.CLIENT_URL,
   credentials: true
 }));
-
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/gigs', gigRoutes);
