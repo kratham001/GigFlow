@@ -28,8 +28,8 @@ const io = new Server(server, {
 
 
 // DEBUGGING BLOCK - PASTE THIS IN SERVER.JS
-const cookieParser = require('cookie-parser'); // Ensure this is at the top of file
-app.use(cookieParser()); // Ensure this is used BEFORE routes
+// const cookieParser = require('cookie-parser'); // Ensure this is at the top of file
+// app.use(cookieParser()); // Ensure this is used BEFORE routes
 
 app.use((req, res, next) => {
   console.log("----- INCOMING REQUEST DEBUG -----");
