@@ -1,0 +1,16 @@
+{
+  "name": "MERN Stack Config",
+  "forwardPorts": [5000, 5173],
+  "portsAttributes": {
+    "5000": {
+      "label": "Backend API",
+      "visibility": "public",
+      "onAutoForward": "silent"
+    },
+    "5173": {
+      "label": "Frontend Client",
+      "visibility": "public",
+      "onAutoForward": "silent"
+    }
+  }
+}
