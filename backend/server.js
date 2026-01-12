@@ -25,6 +25,30 @@ const io = new Server(server, {
   }
 });
 
+
+
+// DEBUGGING BLOCK - PASTE THIS IN SERVER.JS
+const cookieParser = require('cookie-parser'); // Ensure this is at the top of file
+app.use(cookieParser()); // Ensure this is used BEFORE routes
+
+app.use((req, res, next) => {
+  console.log("----- INCOMING REQUEST DEBUG -----");
+  console.log("Origin:", req.headers.origin);
+  console.log("Cookies:", req.cookies); // This checks if cookie exists
+  console.log("Auth Header:", req.headers.authorization); 
+  console.log("----------------------------------");
+  next();
+});
+
+
+
+
+
+
+
+
+
+
 app.set('io', io);
 
 app.use(express.json());
