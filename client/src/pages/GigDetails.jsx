@@ -15,12 +15,11 @@ const GigDetails = () => {
   const [gig, setGig] = useState(null);
   const [bidMessage, setBidMessage] = useState('');
 
-  // Fetch Gig Data directly (Separate from bids)
+  
   useEffect(() => {
     const fetchGig = async () => {
       try {
-        // Re-using the search endpoint but filtering in JS for simplicity, 
-        // ideally you'd have a GET /gigs/:id endpoint
+        
         const res = await api.get(`/gigs`); 
         const foundGig = res.data.find(g => g._id === id);
         setGig(foundGig);
@@ -31,7 +30,7 @@ const GigDetails = () => {
     fetchGig();
   }, [id]);
 
-  // Fetch Bids if User is Owner
+  
   useEffect(() => {
     if (gig && user && gig.ownerId._id === user._id) {
       dispatch(fetchBidsByGigId(id));
