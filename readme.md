@@ -2,7 +2,7 @@
 
 GigFlow is a full-stack MERN application that connects freelancers with clients. Clients can post gigs, view proposals, and hire talent, while freelancers can browse opportunities, place bids, and receive real-time notifications when hired.
 
-**Live Demo:** [Link to your Vercel App](https://gig-flow-project.vercel.app/)  
+**Live Demo:** [GigFlow](https://gig-flow-project.vercel.app/)  
 *(Replace with your actual URL)*
 
 ---
