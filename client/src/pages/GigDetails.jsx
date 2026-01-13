@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchBidsByGigId, hireFreelancer } from '../features/bidSlice';
 import api from '../api/axiosInstance';
@@ -9,6 +9,9 @@ import toast from 'react-hot-toast';
 const GigDetails = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+
+  const navigate= useNavigate();
+
   const { user } = useSelector((state) => state.auth);
   const { bids } = useSelector((state) => state.bids);
   
@@ -46,6 +49,9 @@ const GigDetails = () => {
       toast.success('Bid submitted successfully!');
       setBidMessage('');
       setBidAmount('');
+
+      navigate('/');
+      
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit bid');
     }
