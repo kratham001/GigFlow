@@ -9,9 +9,14 @@ const Dashboard = () => {
   const [search, setSearch] = useState('');
   const { user } = useSelector((state) => state.auth);
   
-  // Modal State for new gig
+  // --- STATE FOR POST GIG MODAL ---
   const [showModal, setShowModal] = useState(false);
   const [newGig, setNewGig] = useState({ title: '', description: '', budget: '' });
+
+  // --- STATE FOR BIDDING MODAL (NEW) ---
+  const [showBidModal, setShowBidModal] = useState(false);
+  const [selectedGigId, setSelectedGigId] = useState(null);
+  const [bidData, setBidData] = useState({ amount: '', message: '' });
 
   useEffect(() => {
     fetchGigs();
@@ -31,6 +36,7 @@ const Dashboard = () => {
     fetchGigs(search);
   };
 
+  // --- POST GIG FUNCTION ---
   const createGig = async (e) => {
     e.preventDefault();
     try {
@@ -44,6 +50,32 @@ const Dashboard = () => {
     }
   };
 
+  // --- OPEN BID MODAL FUNCTION (NEW) ---
+  const openBidModal = (gigId) => {
+    setSelectedGigId(gigId); // Remember which gig we are bidding on
+    setShowBidModal(true);   // Show the popup
+  };
+
+  // --- SUBMIT BID FUNCTION (NEW) ---
+  const submitBid = async (e) => {
+    e.preventDefault();
+    try {
+      // Send the bid to the backend
+      await api.post('/bids', {
+        gigId: selectedGigId,
+        amount: Number(bidData.amount),
+        message: bidData.message
+      });
+
+      toast.success('Bid sent successfully!');
+      setShowBidModal(false); // Close the popup
+      setBidData({ amount: '', message: '' }); // Reset form
+      // No need to redirect; you are already on the Dashboard!
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send bid');
+    }
+  };
+
   return (
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
@@ -51,13 +83,14 @@ const Dashboard = () => {
         {user && (
           <button 
             onClick={() => setShowModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            className="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-700 transition"
           >
             Post a Gig
           </button>
         )}
       </div>
 
+      {/* Search Form */}
       <form onSubmit={handleSearch} className="mb-6 flex gap-2">
         <input 
           type="text"
@@ -69,27 +102,45 @@ const Dashboard = () => {
         <button type="submit" className="bg-gray-800 text-white px-4 py-2 rounded">Search</button>
       </form>
 
+      {/* Gig Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {gigs.map((gig) => (
-          <div key={gig._id} className="border p-5 rounded-lg shadow-sm hover:shadow-md transition bg-white">
-            <h3 className="text-xl font-semibold mb-2">{gig.title}</h3>
-            <p className="text-gray-600 mb-4 line-clamp-3">{gig.description}</p>
-            <div className="flex justify-between items-center text-sm text-gray-500">
-              <span className="font-medium text-green-600">Budget: ${gig.budget}</span>
-              <span>By: {gig.ownerId?.name}</span>
+          <div key={gig._id} className="border p-5 rounded-lg shadow-sm hover:shadow-md transition bg-white flex flex-col justify-between">
+            <div>
+              <h3 className="text-xl font-semibold mb-2">{gig.title}</h3>
+              <p className="text-gray-600 mb-4 line-clamp-3">{gig.description}</p>
+              <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
+                <span className="font-medium text-green-600">Budget: ${gig.budget}</span>
+                <span>By: {gig.ownerId?.name}</span>
+              </div>
             </div>
-            <Link 
-              to={`/gig/${gig._id}`}
-              className="mt-4 block text-center border border-blue-600 text-blue-600 py-2 rounded hover:bg-blue-50 transition"
-            >
-              View Details
-            </Link>
+
+            {/* BUTTONS SECTION */}
+            <div className="flex gap-2 mt-auto">
+              <Link 
+                to={`/gig/${gig._id}`}
+                className="flex-1 text-center border border-blue-600 text-blue-600 py-2 rounded hover:bg-blue-50 transition"
+              >
+                Details
+              </Link>
+              
+              {/* Only show 'Quick Bid' if user is NOT the owner */}
+              {user && user._id !== gig.ownerId?._id && (
+                <button 
+                  onClick={() => openBidModal(gig._id)}
+                  className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+                >
+                  Quick Bid
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>
 
+      {/* --- POST GIG MODAL (EXISTING) --- */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white p-6 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-bold mb-4">Post New Gig</h2>
             <form onSubmit={createGig} className="flex flex-col gap-3">
@@ -110,12 +161,59 @@ const Dashboard = () => {
               />
               <div className="flex gap-2 mt-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 bg-gray-300 py-2 rounded">Cancel</button>
-                <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded">Post</button>
+                <button type="submit" className="flex-1 bg-gray-900 text-white py-2 rounded">Post</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* --- QUICK BID MODAL (NEW) --- */}
+      {showBidModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Send a Proposal</h2>
+            <form onSubmit={submitBid} className="flex flex-col gap-3">
+              
+              <label className="text-sm font-semibold text-gray-700">Your Price ($)</label>
+              <input 
+                type="number" 
+                placeholder="e.g. 50" 
+                required 
+                className="border p-2 rounded"
+                value={bidData.amount} 
+                onChange={e => setBidData({...bidData, amount: e.target.value})}
+              />
+
+              <label className="text-sm font-semibold text-gray-700">Cover Letter</label>
+              <textarea 
+                placeholder="Why should they hire you?" 
+                required 
+                className="border p-2 rounded h-32"
+                value={bidData.message} 
+                onChange={e => setBidData({...bidData, message: e.target.value})}
+              />
+
+              <div className="flex gap-2 mt-2">
+                <button 
+                  type="button" 
+                  onClick={() => setShowBidModal(false)} 
+                  className="flex-1 bg-gray-300 py-2 rounded hover:bg-gray-400"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                >
+                  Send Bid
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
